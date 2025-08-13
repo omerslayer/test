@@ -3,74 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talk2Translate</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            color: white;
-            text-align: center;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-        }
-        button {
-            background-color: #ff4081;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2em;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #f50057;
-        }
-        #status {
-            margin-top: 20px;
-            font-size: 1.1em;
-        }
-    </style>
+    <title>Ses Tanıma Testi</title>
 </head>
 <body>
-
-    <h1>🎤 Talk2Translate</h1>
-    <p>Dilediğiniz dilde konuşun, anında çevirin!</p>
-    
+    <h1>🎤 Ses Tanıma Testi</h1>
     <button id="startBtn">Dinlemeyi Başlat</button>
     <p id="status">Hazır</p>
+    <div id="recognizedText" style="border:1px solid black; padding:10px; width:80%; min-height:30px;"></div>
 
     <script>
         const startBtn = document.getElementById('startBtn');
         const statusText = document.getElementById('status');
+        const recognizedText = document.getElementById('recognizedText');
+        let recognition;
 
         startBtn.addEventListener('click', function() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(function(stream) {
-                        statusText.textContent = "Mikrofon izni verildi. Artık konuşabilirsiniz.";
-                        statusText.style.color = "lightgreen";
-                        console.log("Mikrofon izni alındı.");
-                        // Burada çeviri veya ses işleme kodun başlayacak
+                    .then(function() {
+                        startRecognition();
                     })
                     .catch(function(err) {
                         statusText.textContent = "Mikrofon izni reddedildi!";
-                        statusText.style.color = "red";
                         console.error("Mikrofon izni reddedildi:", err);
                     });
             } else {
                 alert("Tarayıcınız mikrofon desteği sunmuyor.");
             }
         });
-    </script>
 
+        function startRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Tarayıcınız SpeechRecognition desteği sunmuyor.");
+                return;
+            }
+            recognition = new SpeechRecognition();
+            recognition.lang = "tr-TR";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+            statusText.textContent = "Dinleniyor...";
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                recognizedText.textContent = transcript;
+                console.log("Algılanan metin:", transcript);
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Hata:", event.error);
+                statusText.textContent = "Hata: " + event.error;
+            };
+
+            recognition.onend = function() {
+                statusText.textContent = "Dinleme bitti";
+            };
+        }
+    </script>
 </body>
 </html>
